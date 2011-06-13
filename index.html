@@ -1,0 +1,83 @@
+<html>
+	<head>
+		<script src=http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js></script>
+		<script src="http://localhost:3000/socket.io/socket.io.js"></script>
+		<script type="text/javascript">
+			var socket = new io.Socket("localhost", {port:3000});
+			socket.connect();
+
+			socket.on('connect', function() {
+				alert('Connected');
+			});
+
+			socket.on('message', function(message) {
+				switch (message.command) {
+					case 'join-response': {
+						handleJoinResponse(message.payload);
+						$('#chat-area').show();
+					}break;
+					case 'chat-broadcast': {
+						handleChatBroadcast(message.payload);
+					}	
+				}
+			});
+
+			function handleJoinResponse(payload) {
+				alert(payload.welcome);
+			}
+
+			function handleChatBroadcast(payload) {
+				chatLog += payload.chatMessage;
+				$('#chat-window').val(chatLog);
+			}
+			
+			var chatLog = '';
+
+			$(document).ready(function() {
+				$('#btn-join').click(function() {
+					if (socket.connected) {
+						var name = $('#user-name').val();
+						
+						var m = new message();
+						m.command = 'join';
+						m.payload = new joinPayload();
+
+				$('#btn-send').click(function() {
+					if (socket.connected) {	
+						var chatMsg = $('#chat-msg').val() + '\n';
+						var m = new message();
+						m.command = 'chat';
+						m.payload = new chatPayload();
+						m.payload.chatMessage = chatMsg;
+						socket.send(m);
+					}
+				});
+			});
+
+
+			function message() {
+				this.command = '';
+				this.payload = null;
+			};
+
+			function joinPayload() {
+				this.name = '';
+			};
+
+			function chatPayload() {
+				this.chatMessage = '';
+			};
+
+		</script>
+	</head>
+	<body>
+		<input id="user-name" type="text" />
+		<button id="btn-join">Join</button>
+		<div id="chat-area" style="display:none;">
+		<textarea rows="10" cols="30" id="chat-window"></textarea>
+		<br/>
+		<input id="chat-msg" type="text" />
+		<button id="btn-send">Send</button>
+		</div>
+	<body>
+</html>
